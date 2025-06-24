@@ -1,0 +1,24 @@
+# Core dependencies
+# NOTE: This package requires PyTorch nightly (2.8+) for full MPS compatibility
+# Install with: pip install --pre torch --index-url https://download.pytorch.org/whl/nightly
+torch>=2.8.0
+numpy>=1.21.0
+
+# For type hints and development
+typing-extensions>=4.0.0
+
+# Optional: for enhanced numerical computing
+scipy>=1.7.0
+
+# Development and testing (optional)
+pytest>=6.0.0
+pytest-benchmark>=3.4.0
+
+# Documentation (optional)  
+sphinx>=4.0.0
+sphinx-rtd-theme>=1.0.0
+
+# Code quality (optional)
+black>=22.0.0
+flake8>=4.0.0
+mypy>=0.950
