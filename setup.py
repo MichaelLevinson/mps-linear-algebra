@@ -26,7 +26,7 @@ setup(
     url="https://github.com/MichaelLevinson/mps-linear-algebra",
     packages=find_packages(),
     classifiers=[
-        "Development Status :: 5 - Production/Stable",
+        "Development Status :: Working \ Development",
         "Intended Audience :: Science/Research",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: MIT License",
