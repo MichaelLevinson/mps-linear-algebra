@@ -1,9 +1,6 @@
 """
 MPS-Compatible Linear Algebra Utilities for SINDy Training
 
-This module provides MPS-native implementations of essential linear algebra operations
-that are not supported by PyTorch's MPS backend, specifically designed for the
-integrated Latent-SINDy + FiLM-LSTM training pipeline.
 
 Key Features:
 1. QR-based pseudoinverse computation
