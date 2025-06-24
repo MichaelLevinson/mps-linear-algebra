@@ -21,7 +21,6 @@ from typing import Dict, List, Tuple, Optional
 
 from qr_decomp import QR_mps, pinv_via_qr, solve_via_qr, condition_number_estimate
 from mps_linalg import MPSLinearAlgebra, pinv, solve, lstsq
-# Note: Removed proprietary SINDy imports for public release
 
 
 class MPSCompatibilityTester:
