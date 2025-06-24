@@ -1,0 +1,142 @@
+name: Nightly CI (PyTorch 2.8+)
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run daily at 2 AM UTC to catch nightly build issues
+    - cron: '0 2 * * *'
+
+jobs:
+  test-nightly:
+    runs-on: ${{ matrix.os }}
+    continue-on-error: true  # Nightly builds can be unstable
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python-version: ['3.10', '3.11']
+        
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+        
+    - name: Install PyTorch nightly
+      run: |
+        python -m pip install --upgrade pip
+        if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
+          pip install --pre torch --index-url https://download.pytorch.org/whl/nightly/cpu
+        else
+          pip install --pre torch --index-url https://download.pytorch.org/whl/nightly
+        fi
+        pip install numpy>=1.21.0 typing-extensions>=4.0.0
+        
+    - name: Verify PyTorch version
+      run: |
+        python -c "
+        import torch
+        print(f'PyTorch version: {torch.__version__}')
+        version_parts = torch.__version__.split('.')
+        major, minor = int(version_parts[0]), int(version_parts[1])
+        assert major >= 2 and minor >= 8, f'Expected PyTorch 2.8+, got {torch.__version__}'
+        print('✅ PyTorch nightly version check passed')
+        "
+        
+    - name: Test MPS Linear Algebra
+      run: |
+        python -c "
+        import torch
+        import sys
+        sys.path.insert(0, '.')
+        
+        print('Testing imports...')
+        from qr_decomp import QR_mps
+        from mps_linalg import pinv, solve, lstsq
+        print('✅ All imports successful')
+        
+        # Determine device
+        if torch.backends.mps.is_available():
+            device = torch.device('mps')
+            print(f'🚀 Testing on MPS device')
+        else:
+            device = torch.device('cpu')
+            print(f'💻 Testing on CPU device')
+        
+        # Test QR decomposition
+        A = torch.randn(50, 30, device=device)
+        Q, R = QR_mps(A, shift=1e-12)
+        qr_error = torch.norm(A - Q @ R).item()
+        print(f'QR reconstruction error: {qr_error:.2e}')
+        assert qr_error < 1e-4, f'QR error too large: {qr_error}'
+        
+        # Test pseudoinverse
+        A_pinv = pinv(A)
+        pinv_error = torch.norm(A @ A_pinv @ A - A).item()
+        print(f'Pseudoinverse error: {pinv_error:.2e}')
+        assert pinv_error < 1e-3, f'Pseudoinverse error too large: {pinv_error}'
+        
+        # Test linear solving
+        B = torch.randn(50, 50, device=device) + 0.1 * torch.eye(50, device=device)
+        b = torch.randn(50, device=device)
+        x = solve(B, b)
+        solve_error = torch.norm(B @ x - b).item()
+        print(f'Linear solve error: {solve_error:.2e}')
+        assert solve_error < 1e-4, f'Solve error too large: {solve_error}'
+        
+        print('✅ All functionality tests passed!')
+        print(f'Device used: {device}')
+        "
+        
+    - name: Test examples (non-blocking)
+      continue-on-error: true
+      run: |
+        echo 'Testing basic usage example...'
+        timeout 60 python examples/basic_usage.py || echo 'Basic usage example timed out or failed'
+        
+        if [ "${{ matrix.os }}" == "macos-latest" ]; then
+          echo 'Testing SINDy integration example...'
+          timeout 120 python examples/sindy_integration.py || echo 'SINDy example timed out or failed'
+        fi
+
+  fallback-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+        
+    - name: Install stable PyTorch (fallback test)
+      run: |
+        python -m pip install --upgrade pip
+        pip install torch==2.1.0 --index-url https://download.pytorch.org/whl/cpu
+        pip install numpy>=1.21.0 typing-extensions>=4.0.0
+        
+    - name: Test with stable PyTorch (expected to work on CPU)
+      run: |
+        python -c "
+        import torch
+        print(f'Fallback test with PyTorch {torch.__version__}')
+        
+        import sys
+        sys.path.insert(0, '.')
+        from qr_decomp import QR_mps
+        from mps_linalg import pinv
+        
+        # Basic CPU test
+        A = torch.randn(30, 20)
+        Q, R = QR_mps(A, shift=1e-12)
+        error = torch.norm(A - Q @ R).item()
+        print(f'CPU QR error with stable PyTorch: {error:.2e}')
+        assert error < 1e-4
+        print('✅ Fallback compatibility confirmed')
+        "
