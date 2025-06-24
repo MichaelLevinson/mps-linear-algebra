@@ -12,7 +12,7 @@ Key Features:
 4. Automatic fallback strategies
 5. Full MPS device compatibility
 
-Author: Revolutionary SINDy Training System
+Author: Michael Levinson
 """
 
 import torch

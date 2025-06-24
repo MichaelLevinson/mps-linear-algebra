@@ -18,12 +18,12 @@ def read_requirements():
 setup(
     name="mps-linear-algebra",
     version="1.0.0",
-    author="Advanced Scientific Computing",
-    author_email="your.email@example.com",
+    author="Michael Levinson",
+    author_email="mlevinson.nu@gmail.com",
     description="Native linear algebra operations for PyTorch MPS backend",
     long_description=read_readme(),
     long_description_content_type="text/markdown",
-    url="https://github.com/yourusername/mps-linear-algebra",
+    url="https://github.com/MichaelLevinson/mps-linear-algebra",
     packages=find_packages(),
     classifiers=[
         "Development Status :: 5 - Production/Stable",
@@ -44,7 +44,7 @@ setup(
     ],
     python_requires=">=3.8",
     install_requires=[
-        "torch>=2.0.0",
+        "torch>=2.8.0",
         "numpy>=1.21.0",
         "typing-extensions>=4.0.0",
     ],
@@ -70,8 +70,8 @@ setup(
         "scientific-computing", "machine-learning", "physics", "sindy"
     ],
     project_urls={
-        "Bug Reports": "https://github.com/yourusername/mps-linear-algebra/issues",
-        "Source": "https://github.com/yourusername/mps-linear-algebra",
-        "Documentation": "https://github.com/yourusername/mps-linear-algebra/blob/main/README.md",
+        "Bug Reports": "https://github.com/MichaelLevinson/mps-linear-algebra/issues",
+        "Source": "https://github.com/MichaelLevinson/mps-linear-algebra",
+        "Documentation": "https://github.com/MichaelLevinson/mps-linear-algebra/blob/main/README.md",
     },
 )

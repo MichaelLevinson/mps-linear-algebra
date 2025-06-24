@@ -12,7 +12,7 @@ Key Features:
 - Pseudoinverse computation via QR
 - Linear system solving
 
-Author: Advanced Scientific Computing
+Author: Michael Levinson
 License: MIT (suggested)
 """
 

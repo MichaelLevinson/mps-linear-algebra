@@ -19,7 +19,7 @@ Key functions:
 """
 
 __version__ = "1.0.0"
-__author__ = "Advanced Scientific Computing"
+__author__ = "Michael Levinson"
 __license__ = "MIT"
 
 # Import main functions for convenient access
