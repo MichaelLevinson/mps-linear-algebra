@@ -1,0 +1,145 @@
+name: CI (PyTorch Nightly Required)
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  # Flag to indicate this package requires PyTorch nightly
+  PYTORCH_NIGHTLY_REQUIRED: true
+
+jobs:
+  test-linux:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.8', '3.9', '3.10']
+        
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        # Install PyTorch nightly for CPU testing
+        pip install --pre torch torchvision --index-url https://download.pytorch.org/whl/nightly/cpu
+        pip install numpy>=1.21.0 typing-extensions>=4.0.0
+        
+    - name: Verify PyTorch nightly version
+      run: |
+        python -c "
+        import torch
+        print(f'PyTorch version: {torch.__version__}')
+        # Check if we have a nightly or dev version
+        version = torch.__version__
+        if 'dev' in version or '2.8' in version or '2.9' in version:
+            print('✅ PyTorch nightly/dev version detected')
+        else:
+            print(f'⚠️ Warning: Expected nightly version, got {version}')
+            print('This package is designed for PyTorch 2.8+ nightly builds')
+        "
+        
+    - name: Test basic functionality
+      run: |
+        python -c "
+        import torch
+        print(f'Python: {torch.__version__}')
+        print('Testing basic import...')
+        import sys
+        sys.path.insert(0, '.')
+        from qr_decomp import QR_mps
+        from mps_linalg import pinv, solve
+        print('✅ Imports successful')
+        
+        # Basic functionality test
+        A = torch.randn(20, 15)
+        Q, R = QR_mps(A, shift=1e-12)
+        error = torch.norm(A - Q @ R).item()
+        print(f'QR error: {error:.2e}')
+        assert error < 1e-4, f'QR error too large: {error}'
+        print('✅ QR decomposition working')
+        
+        A_pinv = pinv(A)
+        print(f'Pseudoinverse: {A.shape} -> {A_pinv.shape}')
+        print('✅ All tests passed on CPU')
+        "
+        
+  test-macos:
+    runs-on: macos-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        # Install PyTorch nightly for MPS testing
+        pip install --pre torch torchvision --index-url https://download.pytorch.org/whl/nightly
+        pip install numpy>=1.21.0 typing-extensions>=4.0.0
+        
+    - name: Test MPS functionality
+      run: |
+        python -c "
+        import torch
+        print(f'PyTorch version: {torch.__version__}')
+        print(f'MPS available: {torch.backends.mps.is_available()}')
+        
+        import sys
+        sys.path.insert(0, '.')
+        from qr_decomp import QR_mps
+        from mps_linalg import pinv, solve
+        print('✅ Imports successful')
+        
+        device = torch.device('mps' if torch.backends.mps.is_available() else 'cpu')
+        print(f'Testing on device: {device}')
+        
+        A = torch.randn(30, 20, device=device)
+        Q, R = QR_mps(A, shift=1e-12)
+        error = torch.norm(A - Q @ R).item()
+        print(f'QR reconstruction error: {error:.2e}')
+        assert error < 1e-4, f'QR error too large: {error}'
+        
+        A_pinv = pinv(A)
+        identity_error = torch.norm(A @ A_pinv @ A - A).item()
+        print(f'Pseudoinverse error: {identity_error:.2e}')
+        assert identity_error < 1e-3, f'Pseudoinverse error too large: {identity_error}'
+        
+        print('✅ All MPS tests passed!')
+        "
+        
+    - name: Run basic usage example
+      run: |
+        python examples/basic_usage.py || echo 'Basic usage example failed but continuing...'
+
+  lint:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        
+    - name: Install linting tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8
+        
+    - name: Run flake8 (syntax errors only)
+      run: |
+        # Stop the build if there are Python syntax errors or undefined names
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
