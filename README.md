@@ -3,7 +3,7 @@
 **Native linear algebra operations for Apple's Metal Performance Shaders (MPS) backend**
 
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
-[![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-red.svg)](https://pytorch.org/)
+[![PyTorch](https://img.shields.io/badge/PyTorch-2.7+-red.svg)](https://pytorch.org/)
 [![MPS](https://img.shields.io/badge/MPS-Native-green.svg)](https://developer.apple.com/metal/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
